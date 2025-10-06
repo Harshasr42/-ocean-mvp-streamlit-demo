@@ -327,6 +327,13 @@ class MobileOceanApp:
                 </script>
                 """, unsafe_allow_html=True)
                 st.info("🌍 Getting your live location... Please allow location access.")
+                st.markdown("""
+                **📱 How to enable location access:**
+                - **Chrome/Edge:** Click the location icon in address bar → Allow
+                - **Firefox:** Click the shield icon → Allow location access
+                - **Safari:** Safari menu → Preferences → Websites → Location → Allow
+                - **Mobile:** Settings → Privacy → Location Services → Allow for this site
+                """)
         
         with col2:
             st.markdown("**Or enter manually:**")
@@ -343,9 +350,30 @@ class MobileOceanApp:
             longitude = st.number_input("Longitude", min_value=0.0, max_value=180.0, value=77.2, format="%.6f",
                                      help="Your current longitude (use 'Get Live Location' button)")
         
-        # Show current coordinates
+        # Show current coordinates with ocean validation
         st.info(f"📍 **Current Coordinates:** {latitude:.6f}°N, {longitude:.6f}°E")
-        st.markdown("💡 *These coordinates will be used for species abundance predictions*")
+        
+        # Check if coordinates are in ocean (Arabian Sea region)
+        is_ocean = self.is_ocean_coordinates(latitude, longitude)
+        if is_ocean:
+            st.success("🌊 **Ocean coordinates detected!** Perfect for marine species predictions.")
+            st.markdown("💡 *These ocean coordinates will be used for species abundance predictions*")
+        else:
+            st.warning("⚠️ **Land coordinates detected!** For accurate marine predictions, please use ocean coordinates.")
+            st.markdown("💡 *Ocean coordinates (Arabian Sea: 8°N-25°N, 60°E-80°E) are recommended for species predictions*")
+    
+    def is_ocean_coordinates(self, lat, lon):
+        """Check if coordinates are in ocean (Arabian Sea region)."""
+        # Arabian Sea bounds
+        ocean_bounds = {
+            'min_lat': 8.0,   # Southern boundary
+            'max_lat': 25.0,  # Northern boundary  
+            'min_lon': 60.0,  # Western boundary
+            'max_lon': 80.0   # Eastern boundary
+        }
+        
+        return (ocean_bounds['min_lat'] <= lat <= ocean_bounds['max_lat'] and 
+                ocean_bounds['min_lon'] <= lon <= ocean_bounds['max_lon'])
         
         # Catch report form
         with st.form("catch_report"):
