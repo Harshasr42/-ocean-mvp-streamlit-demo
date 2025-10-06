@@ -391,20 +391,20 @@ class MobileOceanApp:
         """Render fishing zones map."""
         st.subheader("🗺️ Fishing Zones & Advisories")
         
-        # Create map
-        center_lat, center_lon = 12.75, 77.5
+        # Create map centered on Arabian Sea (ocean area)
+        center_lat, center_lon = 12.0, 74.0  # Arabian Sea coordinates
         m = folium.Map(
             location=[center_lat, center_lon],
-            zoom_start=10,
+            zoom_start=8,  # Zoom out to show more ocean
             tiles='OpenStreetMap'
         )
         
-        # Add fishing zones (off the coast of Kerala/Karnataka)
+        # Add fishing zones in Arabian Sea (off the coast of Kerala/Karnataka)
         fishing_zones = [
-            {"name": "Zone A - High Productivity", "lat": 12.5, "lon": 74.5, "status": "Open", "color": "green", "radius": 20000},
-            {"name": "Zone B - Moderate Productivity", "lat": 11.8, "lon": 74.8, "status": "Open", "color": "blue", "radius": 25000},
-            {"name": "Zone C - Protected Area", "lat": 13.2, "lon": 74.2, "status": "Closed", "color": "red", "radius": 15000},
-            {"name": "Zone D - Seasonal Closure", "lat": 12.0, "lon": 75.0, "status": "Seasonal", "color": "orange", "radius": 18000}
+            {"name": "Zone A - High Productivity", "lat": 12.5, "lon": 73.5, "status": "Open", "color": "green", "radius": 20000},
+            {"name": "Zone B - Moderate Productivity", "lat": 11.8, "lon": 73.8, "status": "Open", "color": "blue", "radius": 25000},
+            {"name": "Zone C - Protected Area", "lat": 13.2, "lon": 73.2, "status": "Closed", "color": "red", "radius": 15000},
+            {"name": "Zone D - Seasonal Closure", "lat": 12.0, "lon": 74.0, "status": "Seasonal", "color": "orange", "radius": 18000}
         ]
         
         for zone in fishing_zones:
