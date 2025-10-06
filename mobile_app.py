@@ -482,6 +482,7 @@ class MobileOceanApp:
                             st.balloons()
                             
                             # Save to session state for persistence
+                            fishing_date = datetime.now()
                             catch_report = {
                                 'date': fishing_date.strftime('%Y-%m-%d'),
                                 'species': species,
