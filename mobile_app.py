@@ -299,60 +299,11 @@ class MobileOceanApp:
         
         # Location selection (outside the form)
         st.subheader("📍 Location")
-        
-        # Live location button
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col1:
-            if st.button("🌍 Get Live Location", type="primary"):
-                st.markdown("""
-                <script>
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        function(position) {
-                            const lat = position.coords.latitude;
-                            const lon = position.coords.longitude;
-                            window.parent.postMessage({
-                                type: 'location',
-                                lat: lat,
-                                lon: lon
-                            }, '*');
-                        },
-                        function(error) {
-                            alert('Location access denied or not available');
-                        }
-                    );
-                } else {
-                    alert('Geolocation not supported by this browser');
-                }
-                </script>
-                """, unsafe_allow_html=True)
-                st.info("🌍 Getting your live location... Please allow location access.")
-                st.markdown("""
-                **📱 How to enable location access:**
-                - **Chrome/Edge:** Click the location icon in address bar → Allow
-                - **Firefox:** Click the shield icon → Allow location access
-                - **Safari:** Safari menu → Preferences → Websites → Location → Allow
-                - **Mobile:** Settings → Privacy → Location Services → Allow for this site
-                """)
-        
-        with col2:
-            st.markdown("**Or enter manually:**")
-        
-        with col3:
-            st.markdown("**Current coordinates will be used for predictions**")
-        
-        # Location inputs
         col1, col2 = st.columns(2)
         with col1:
-            latitude = st.number_input("Latitude", min_value=0.0, max_value=90.0, value=12.5, format="%.6f", 
-                                     help="Your current latitude (use 'Get Live Location' button)")
+            latitude = st.number_input("Latitude", min_value=0.0, max_value=90.0, value=12.5, format="%.6f")
         with col2:
-            longitude = st.number_input("Longitude", min_value=0.0, max_value=180.0, value=77.2, format="%.6f",
-                                     help="Your current longitude (use 'Get Live Location' button)")
-        
-        # Show current coordinates
-        st.info(f"📍 **Current Coordinates:** {latitude:.6f}°N, {longitude:.6f}°E")
-        st.markdown("💡 *These coordinates will be used for species abundance predictions*")
+            longitude = st.number_input("Longitude", min_value=0.0, max_value=180.0, value=77.2, format="%.6f")
         
         # Catch report form
         with st.form("catch_report"):
