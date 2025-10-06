@@ -306,27 +306,59 @@ class MobileOceanApp:
             if st.button("🌍 Get Live Location", type="primary"):
                 st.markdown("""
                 <script>
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        function(position) {
-                            const lat = position.coords.latitude;
-                            const lon = position.coords.longitude;
-                            // Update the latitude and longitude inputs
-                            const latInput = document.querySelector('input[aria-label="Latitude"]');
-                            const lonInput = document.querySelector('input[aria-label="Longitude"]');
-                            if (latInput) latInput.value = lat;
-                            if (lonInput) lonInput.value = lon;
-                            // Trigger change event
-                            if (latInput) latInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            if (lonInput) lonInput.dispatchEvent(new Event('input', { bubbles: true }));
-                        },
-                        function(error) {
-                            alert('Location access denied or not available');
-                        }
-                    );
-                } else {
-                    alert('Geolocation not supported by this browser');
+                function getLocation() {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            function(position) {
+                                const lat = position.coords.latitude;
+                                const lon = position.coords.longitude;
+                                
+                                // Find the latitude and longitude inputs more reliably
+                                const inputs = document.querySelectorAll('input[type="number"]');
+                                let latInput = null;
+                                let lonInput = null;
+                                
+                                for (let input of inputs) {
+                                    const label = input.getAttribute('aria-label');
+                                    if (label && label.includes('Latitude')) {
+                                        latInput = input;
+                                    } else if (label && label.includes('Longitude')) {
+                                        lonInput = input;
+                                    }
+                                }
+                                
+                                if (latInput && lonInput) {
+                                    latInput.value = lat.toFixed(6);
+                                    lonInput.value = lon.toFixed(6);
+                                    
+                                    // Trigger input events
+                                    latInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                    lonInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                    
+                                    // Also trigger change events
+                                    latInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                    lonInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                    
+                                    console.log('Location updated:', lat, lon);
+                                }
+                            },
+                            function(error) {
+                                console.error('Geolocation error:', error);
+                                alert('Location access denied or not available. Error: ' + error.message);
+                            },
+                            {
+                                enableHighAccuracy: true,
+                                timeout: 10000,
+                                maximumAge: 0
+                            }
+                        );
+                    } else {
+                        alert('Geolocation not supported by this browser');
+                    }
                 }
+                
+                // Call the function immediately
+                getLocation();
                 </script>
                 """, unsafe_allow_html=True)
                 st.info("🌍 Getting your live location...")
