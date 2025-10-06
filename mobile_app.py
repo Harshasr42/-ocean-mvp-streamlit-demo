@@ -316,6 +316,10 @@ class MobileOceanApp:
                 3. **For ocean predictions**, we'll use ocean coordinates (15.0°N, 70.0°E)
                 """)
         
+        # Initialize session state if not exists
+        if 'get_location' not in st.session_state:
+            st.session_state.get_location = False
+        
         # Check if location was requested
         if st.session_state.get_location:
             st.markdown("""
@@ -365,6 +369,12 @@ class MobileOceanApp:
         
         # Location inputs with session storage support
         col1, col2 = st.columns(2)
+        
+        # Initialize user location session state if not exists
+        if 'user_lat' not in st.session_state:
+            st.session_state.user_lat = 12.5
+        if 'user_lon' not in st.session_state:
+            st.session_state.user_lon = 77.2
         
         # Get stored location from session storage
         stored_lat = st.session_state.get('user_lat', 12.5)
