@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 import folium
 from streamlit_folium import st_folium
 import logging
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -40,6 +41,34 @@ class MobileOceanApp:
         self.user_data = None
         self.api_token = None
         self.api_config = APIConfig()
+    
+    def make_api_request(self, method, url, **kwargs):
+        """Make API request with retry logic for cold starts."""
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                if method.upper() == 'GET':
+                    response = requests.get(url, **kwargs)
+                elif method.upper() == 'POST':
+                    response = requests.post(url, **kwargs)
+                else:
+                    response = requests.request(method, url, **kwargs)
+                
+                return response
+            except requests.exceptions.Timeout:
+                if attempt < max_retries - 1:
+                    st.info(f"⏳ Backend is waking up... Retrying in 10 seconds (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(10)
+                    continue
+                else:
+                    raise
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1:
+                    st.info(f"🔄 Connection issue... Retrying in 5 seconds (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(5)
+                    continue
+                else:
+                    raise
         
         st.set_page_config(
             page_title="Fisherman Dashboard",
@@ -85,7 +114,7 @@ class MobileOceanApp:
                 'appid': api_key,
                 'units': 'metric'
             }
-            response = requests.get(url, params=params, timeout=30)
+            response = self.make_api_request('GET', url, params=params, timeout=60)
             if response.status_code == 200:
                 data = response.json()
                 return {
@@ -169,11 +198,12 @@ class MobileOceanApp:
                 "biodiversity_category": prediction_data.get("biodiversity_category", "High")
             }
             
-            response = requests.post(
+            response = self.make_api_request(
+                'POST',
                 self.api_config.ENDPOINTS["predict"],
                 json=fastapi_data,
                 headers=self.get_headers(),
-                timeout=30
+                timeout=60
             )
             
             if response.status_code == 200:
@@ -321,11 +351,12 @@ class MobileOceanApp:
                     
                     # Submit to API
                     try:
-                        response = requests.post(
+                        response = self.make_api_request(
+                            'POST',
                             f"{self.api_config.API_BASE_URL}/api/catch-reports",
                             json=catch_data,
                             headers=self.get_headers(),
-                            timeout=30
+                            timeout=60
                         )
                         
                         if response.status_code == 200:
