@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 # API Configuration
 class APIConfig:
-    API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8001")  # FastAPI backend URL
-    PREDICT_API_URL = os.getenv("PREDICT_API_URL", "http://localhost:8001")  # Same backend for prediction
+    API_BASE_URL = os.getenv("API_BASE_URL", "https://ocean-mvp-backend.onrender.com")  # Live backend URL
+    PREDICT_API_URL = os.getenv("PREDICT_API_URL", "https://ocean-mvp-backend.onrender.com")  # Live backend URL
     
     ENDPOINTS = {
         "species": f"{API_BASE_URL}/api/species",
