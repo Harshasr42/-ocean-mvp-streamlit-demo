@@ -85,7 +85,7 @@ class MobileOceanApp:
                 'appid': api_key,
                 'units': 'metric'
             }
-            response = requests.get(url, params=params, timeout=5)
+            response = requests.get(url, params=params, timeout=30)
             if response.status_code == 200:
                 data = response.json()
                 return {
@@ -173,7 +173,7 @@ class MobileOceanApp:
                 self.api_config.ENDPOINTS["predict"],
                 json=fastapi_data,
                 headers=self.get_headers(),
-                timeout=10
+                timeout=30
             )
             
             if response.status_code == 200:
@@ -325,7 +325,7 @@ class MobileOceanApp:
                             f"{self.api_config.API_BASE_URL}/api/catch-reports",
                             json=catch_data,
                             headers=self.get_headers(),
-                            timeout=5
+                            timeout=30
                         )
                         
                         if response.status_code == 200:
