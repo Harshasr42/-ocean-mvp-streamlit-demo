@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 # API Configuration
 class APIConfig:
-    API_BASE_URL = os.getenv("API_BASE_URL", "https://ocean-mvp-backend.onrender.com")  # Live backend URL - Updated
-    PREDICT_API_URL = os.getenv("PREDICT_API_URL", "https://ocean-mvp-backend.onrender.com")  # Live backend URL - Updated
+    API_BASE_URL = os.getenv("API_BASE_URL", "https://web-production-ac7ea.up.railway.app")  # Railway backend URL
+    PREDICT_API_URL = os.getenv("PREDICT_API_URL", "https://web-production-ac7ea.up.railway.app")  # Railway backend URL
     
     ENDPOINTS = {
         "species": f"{API_BASE_URL}/api/species",
