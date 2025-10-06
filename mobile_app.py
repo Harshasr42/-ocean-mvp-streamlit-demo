@@ -299,17 +299,53 @@ class MobileOceanApp:
         
         # Location selection (outside the form)
         st.subheader("📍 Location")
-        col1, col2, col3 = st.columns([2, 2, 1])
+        
+        # Live location button
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
-            latitude = st.number_input("Latitude", min_value=0.0, max_value=90.0, value=12.5, format="%.6f")
+            if st.button("🌍 Get Live Location", type="primary"):
+                st.markdown("""
+                <script>
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            window.parent.postMessage({
+                                type: 'location',
+                                lat: lat,
+                                lon: lon
+                            }, '*');
+                        },
+                        function(error) {
+                            alert('Location access denied or not available');
+                        }
+                    );
+                } else {
+                    alert('Geolocation not supported by this browser');
+                }
+                </script>
+                """, unsafe_allow_html=True)
+                st.info("🌍 Getting your live location... Please allow location access.")
+        
         with col2:
-            longitude = st.number_input("Longitude", min_value=0.0, max_value=180.0, value=77.2, format="%.6f")
+            st.markdown("**Or enter manually:**")
+        
         with col3:
-            if st.button("📍 Use Current Location"):
-                st.info("Location services would be enabled here")
-                # In a real app, this would use GPS
-                latitude = 12.5
-                longitude = 77.2
+            st.markdown("**Current coordinates will be used for predictions**")
+        
+        # Location inputs
+        col1, col2 = st.columns(2)
+        with col1:
+            latitude = st.number_input("Latitude", min_value=0.0, max_value=90.0, value=12.5, format="%.6f", 
+                                     help="Your current latitude (use 'Get Live Location' button)")
+        with col2:
+            longitude = st.number_input("Longitude", min_value=0.0, max_value=180.0, value=77.2, format="%.6f",
+                                     help="Your current longitude (use 'Get Live Location' button)")
+        
+        # Show current coordinates
+        st.info(f"📍 **Current Coordinates:** {latitude:.6f}°N, {longitude:.6f}°E")
+        st.markdown("💡 *These coordinates will be used for species abundance predictions*")
         
         # Catch report form
         with st.form("catch_report"):
@@ -377,6 +413,7 @@ class MobileOceanApp:
                             
                             if prediction_result:
                                 st.success(f"🎯 **Predicted Species Abundance: {prediction_result['prediction']:.1f} individuals**")
+                                st.info(f"📍 **Based on your location: {latitude:.6f}°N, {longitude:.6f}°E**")
                                 st.info(f"📊 **Model Confidence: {prediction_result['confidence']:.1%}**")
                                 st.info(f"🌡️ **Based on SST: {prediction_data['mean_sst']:.1f}°C**")
                                 st.info(f"🧬 **Biodiversity Index: {prediction_data['biodiversity_index']:.2f}**")
