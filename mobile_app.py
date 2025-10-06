@@ -346,34 +346,13 @@ class MobileOceanApp:
             longitude = st.number_input("Longitude", min_value=0.0, max_value=180.0, value=77.2, format="%.6f",
                                      help="Your current longitude (use 'Get Live Location' button)")
         
-        # Show current coordinates with smart messaging
+        # Show current coordinates
         st.info(f"📍 **Your Current Location:** {latitude:.6f}°N, {longitude:.6f}°E")
         
-        # Check if user is in ocean (Arabian Sea region)
-        is_in_ocean = self.is_in_ocean_region(latitude, longitude)
+        # Ocean coordinates for predictions
         ocean_lat, ocean_lon = 15.0, 70.0  # Arabian Sea coordinates for predictions
-        
-        if is_in_ocean:
-            st.success("🌊 **You're in the ocean!** Perfect for marine species predictions.")
-            st.success(f"🌊 **Using Your Ocean Location:** {latitude:.6f}°N, {longitude:.6f}°E")
-            st.markdown("💡 *Your ocean location will be used for species abundance predictions*")
-        else:
-            st.warning("⚠️ **You're on land.** For accurate marine predictions, we'll use ocean coordinates.")
-            st.success(f"🌊 **Ocean Coordinates for Predictions:** {ocean_lat:.1f}°N, {ocean_lon:.1f}°E")
-            st.markdown("💡 *Ocean coordinates are used for species abundance predictions, not your land location*")
-    
-    def is_in_ocean_region(self, lat, lon):
-        """Check if coordinates are in ocean (Arabian Sea region)."""
-        # Arabian Sea bounds
-        ocean_bounds = {
-            'min_lat': 8.0,   # Southern boundary
-            'max_lat': 25.0,  # Northern boundary  
-            'min_lon': 60.0,  # Western boundary
-            'max_lon': 80.0   # Eastern boundary
-        }
-        
-        return (ocean_bounds['min_lat'] <= lat <= ocean_bounds['max_lat'] and 
-                ocean_bounds['min_lon'] <= lon <= ocean_bounds['max_lon'])
+        st.success(f"🌊 **Ocean Coordinates for Predictions:** {ocean_lat:.1f}°N, {ocean_lon:.1f}°E")
+        st.markdown("💡 *Ocean coordinates are used for species abundance predictions, not your current location*")
         
         # Catch report form
         with st.form("catch_report"):
@@ -430,11 +409,9 @@ class MobileOceanApp:
                             # Now trigger ML prediction
                             st.info("🤖 Analyzing environmental conditions and predicting species abundance...")
                             
-                            # Preprocess data for ML prediction (use user's ocean location or default ocean coordinates)
-                            prediction_lat = latitude if is_in_ocean else ocean_lat
-                            prediction_lon = longitude if is_in_ocean else ocean_lon
+                            # Preprocess data for ML prediction (use ocean coordinates for predictions)
                             prediction_data = self.preprocess_catch_data_for_ml(
-                                prediction_lat, prediction_lon, species, catch_weight, individual_count, 
+                                ocean_lat, ocean_lon, species, catch_weight, individual_count, 
                                 gear_type, vessel_type, fishing_depth
                             )
                             
@@ -444,12 +421,7 @@ class MobileOceanApp:
                             if prediction_result:
                                 st.success(f"🎯 **Predicted Species Abundance: {prediction_result['prediction']:.1f} individuals**")
                                 st.info(f"📍 **Your Location: {latitude:.6f}°N, {longitude:.6f}°E**")
-                                
-                                if is_in_ocean:
-                                    st.success(f"🌊 **Using Your Ocean Location: {prediction_lat:.6f}°N, {prediction_lon:.6f}°E**")
-                                else:
-                                    st.info(f"🌊 **Using Ocean Coordinates: {prediction_lat:.1f}°N, {prediction_lon:.1f}°E**")
-                                
+                                st.info(f"🌊 **Prediction Based on Ocean: {ocean_lat:.1f}°N, {ocean_lon:.1f}°E**")
                                 st.info(f"📊 **Model Confidence: {prediction_result['confidence']:.1%}**")
                                 st.info(f"🌡️ **Based on SST: {prediction_data['mean_sst']:.1f}°C**")
                                 st.info(f"🧬 **Biodiversity Index: {prediction_data['biodiversity_index']:.2f}**")
