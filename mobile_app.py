@@ -51,6 +51,8 @@ class MobileOceanApp:
             st.session_state.total_weight = 0.0
         if 'fishing_days' not in st.session_state:
             st.session_state.fishing_days = 0
+        if 'current_sst' not in st.session_state:
+            st.session_state.current_sst = 28.5  # Default SST
     
     def make_api_request(self, method, url, **kwargs):
         """Make API request with retry logic for cold starts."""
@@ -235,10 +237,13 @@ class MobileOceanApp:
         """Show additional insights from the prediction."""
         st.subheader("📊 Prediction Insights")
         
+        # Use the same SST value from session state for consistency
+        current_sst = st.session_state.get('current_sst', prediction_data['mean_sst'])
+        
         col1, col2 = st.columns(2)
         with col1:
             st.metric("Predicted Abundance", f"{prediction_result['prediction']:.1f}")
-            st.metric("Sea Surface Temperature", f"{prediction_data['mean_sst']:.1f}°C")
+            st.metric("Sea Surface Temperature", f"{current_sst:.1f}°C")
             st.metric("Biodiversity Index", f"{prediction_data['biodiversity_index']:.2f}")
         
         with col2:
@@ -520,6 +525,9 @@ class MobileOceanApp:
                             # Update prediction data with real SST from catch report
                             prediction_data['mean_sst'] = sst
                             
+                            # Store SST in session state for consistency across all sections
+                            st.session_state.current_sst = sst
+                            
                             # Get ML prediction
                             prediction_result = self.get_species_abundance_prediction(prediction_data)
                             
@@ -586,8 +594,10 @@ class MobileOceanApp:
         """Render weather and ocean conditions."""
         st.subheader("🌡️ Weather & Ocean Conditions")
         
-        # Get real SST data from catch reports or use default
-        if st.session_state.catch_reports:
+        # Get real SST data from session state or use default
+        if 'current_sst' in st.session_state:
+            avg_sst = st.session_state.current_sst
+        elif st.session_state.catch_reports:
             # Use SST from most recent catch report
             recent_report = st.session_state.catch_reports[-1]
             avg_sst = recent_report.get('sst', 28.5)
