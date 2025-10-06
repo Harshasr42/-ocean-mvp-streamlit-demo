@@ -299,11 +299,60 @@ class MobileOceanApp:
         
         # Location selection (outside the form)
         st.subheader("📍 Location")
+        
+        # Live location button
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col1:
+            if st.button("🌍 Get Live Location", type="primary"):
+                st.markdown("""
+                <script>
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            // Update the latitude and longitude inputs
+                            const latInput = document.querySelector('input[aria-label="Latitude"]');
+                            const lonInput = document.querySelector('input[aria-label="Longitude"]');
+                            if (latInput) latInput.value = lat;
+                            if (lonInput) lonInput.value = lon;
+                            // Trigger change event
+                            if (latInput) latInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            if (lonInput) lonInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        },
+                        function(error) {
+                            alert('Location access denied or not available');
+                        }
+                    );
+                } else {
+                    alert('Geolocation not supported by this browser');
+                }
+                </script>
+                """, unsafe_allow_html=True)
+                st.info("🌍 Getting your live location... Please allow location access.")
+        
+        with col2:
+            st.markdown("**Your current location:**")
+        
+        with col3:
+            st.markdown("**Ocean coordinates used for predictions**")
+        
+        # Location inputs
         col1, col2 = st.columns(2)
         with col1:
-            latitude = st.number_input("Latitude", min_value=0.0, max_value=90.0, value=12.5, format="%.6f")
+            latitude = st.number_input("Latitude", min_value=0.0, max_value=90.0, value=12.5, format="%.6f", 
+                                     help="Your current latitude (use 'Get Live Location' button)")
         with col2:
-            longitude = st.number_input("Longitude", min_value=0.0, max_value=180.0, value=77.2, format="%.6f")
+            longitude = st.number_input("Longitude", min_value=0.0, max_value=180.0, value=77.2, format="%.6f",
+                                     help="Your current longitude (use 'Get Live Location' button)")
+        
+        # Show current coordinates
+        st.info(f"📍 **Your Current Location:** {latitude:.6f}°N, {longitude:.6f}°E")
+        
+        # Ocean coordinates for predictions
+        ocean_lat, ocean_lon = 15.0, 70.0  # Arabian Sea coordinates for predictions
+        st.success(f"🌊 **Ocean Coordinates for Predictions:** {ocean_lat:.1f}°N, {ocean_lon:.1f}°E")
+        st.markdown("💡 *Ocean coordinates are used for species abundance predictions, not your current location*")
         
         # Catch report form
         with st.form("catch_report"):
@@ -360,9 +409,9 @@ class MobileOceanApp:
                             # Now trigger ML prediction
                             st.info("🤖 Analyzing environmental conditions and predicting species abundance...")
                             
-                            # Preprocess data for ML prediction
+                            # Preprocess data for ML prediction (use ocean coordinates for predictions)
                             prediction_data = self.preprocess_catch_data_for_ml(
-                                latitude, longitude, species, catch_weight, individual_count, 
+                                ocean_lat, ocean_lon, species, catch_weight, individual_count, 
                                 gear_type, vessel_type, fishing_depth
                             )
                             
@@ -371,7 +420,8 @@ class MobileOceanApp:
                             
                             if prediction_result:
                                 st.success(f"🎯 **Predicted Species Abundance: {prediction_result['prediction']:.1f} individuals**")
-                                st.info(f"📍 **Based on your location: {latitude:.6f}°N, {longitude:.6f}°E**")
+                                st.info(f"📍 **Your Location: {latitude:.6f}°N, {longitude:.6f}°E**")
+                                st.info(f"🌊 **Prediction Based on Ocean: {ocean_lat:.1f}°N, {ocean_lon:.1f}°E**")
                                 st.info(f"📊 **Model Confidence: {prediction_result['confidence']:.1%}**")
                                 st.info(f"🌡️ **Based on SST: {prediction_data['mean_sst']:.1f}°C**")
                                 st.info(f"🧬 **Biodiversity Index: {prediction_data['biodiversity_index']:.2f}**")
