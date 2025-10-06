@@ -329,7 +329,7 @@ class MobileOceanApp:
                 }
                 </script>
                 """, unsafe_allow_html=True)
-                st.info("🌍 Getting your live location... Please allow location access.")
+                st.info("🌍 Getting your live location...")
         
         with col2:
             st.markdown("**Your current location:**")
@@ -352,7 +352,7 @@ class MobileOceanApp:
         # Ocean coordinates for predictions
         ocean_lat, ocean_lon = 15.0, 70.0  # Arabian Sea coordinates for predictions
         st.success(f"🌊 **Ocean Coordinates for Predictions:** {ocean_lat:.1f}°N, {ocean_lon:.1f}°E")
-        st.markdown("💡 *Ocean coordinates are used for species abundance predictions, not your current location*")
+        st.markdown("💡 *Ocean coordinates are used for species abundance predictions*")
         
         # Catch report form
         with st.form("catch_report"):
