@@ -300,68 +300,62 @@ class MobileOceanApp:
         # Location selection (outside the form)
         st.subheader("📍 Location")
         
-        # Live location button
+        # Live location button with session state
         col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             if st.button("🌍 Get Live Location", type="primary"):
-                st.markdown("""
-                <script>
-                function getLocation() {
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                            function(position) {
-                                const lat = position.coords.latitude;
-                                const lon = position.coords.longitude;
-                                
-                                // Find the latitude and longitude inputs more reliably
-                                const inputs = document.querySelectorAll('input[type="number"]');
-                                let latInput = null;
-                                let lonInput = null;
-                                
-                                for (let input of inputs) {
-                                    const label = input.getAttribute('aria-label');
-                                    if (label && label.includes('Latitude')) {
-                                        latInput = input;
-                                    } else if (label && label.includes('Longitude')) {
-                                        lonInput = input;
-                                    }
-                                }
-                                
-                                if (latInput && lonInput) {
-                                    latInput.value = lat.toFixed(6);
-                                    lonInput.value = lon.toFixed(6);
-                                    
-                                    // Trigger input events
-                                    latInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                    lonInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                    
-                                    // Also trigger change events
-                                    latInput.dispatchEvent(new Event('change', { bubbles: true }));
-                                    lonInput.dispatchEvent(new Event('change', { bubbles: true }));
-                                    
-                                    console.log('Location updated:', lat, lon);
-                                }
-                            },
-                            function(error) {
-                                console.error('Geolocation error:', error);
-                                alert('Location access denied or not available. Error: ' + error.message);
-                            },
-                            {
-                                enableHighAccuracy: true,
-                                timeout: 10000,
-                                maximumAge: 0
-                            }
-                        );
-                    } else {
-                        alert('Geolocation not supported by this browser');
-                    }
-                }
-                
-                // Call the function immediately
-                getLocation();
-                </script>
-                """, unsafe_allow_html=True)
+                # Use session state to trigger location request
+                st.session_state.get_location = True
                 st.info("🌍 Getting your live location...")
+                
+                # Show instructions for manual entry
+                st.warning("""
+                **Location Access Instructions:**
+                1. **Allow location access** when browser asks
+                2. **If denied**, manually enter your coordinates below
+                3. **For ocean predictions**, we'll use ocean coordinates (15.0°N, 70.0°E)
+                """)
+        
+        # Check if location was requested
+        if st.session_state.get_location:
+            st.markdown("""
+            <script>
+            function getLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            
+                            // Store in session storage for Streamlit to access
+                            sessionStorage.setItem('user_lat', lat);
+                            sessionStorage.setItem('user_lon', lon);
+                            
+                            // Show success message
+                            alert('Location found! Latitude: ' + lat.toFixed(6) + ', Longitude: ' + lon.toFixed(6));
+                            
+                            // Reload page to update Streamlit
+                            window.location.reload();
+                        },
+                        function(error) {
+                            console.error('Geolocation error:', error);
+                            alert('Location access denied. Please enter coordinates manually.');
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 15000,
+                            maximumAge: 0
+                        }
+                    );
+                } else {
+                    alert('Geolocation not supported by this browser. Please enter coordinates manually.');
+                }
+            }
+            
+            // Call the function
+            getLocation();
+            </script>
+            """, unsafe_allow_html=True)
         
         with col2:
             st.markdown("**Your current location:**")
@@ -369,14 +363,43 @@ class MobileOceanApp:
         with col3:
             st.markdown("**Ocean coordinates used for predictions**")
         
-        # Location inputs
+        # Location inputs with session storage support
         col1, col2 = st.columns(2)
+        
+        # Get stored location from session storage
+        stored_lat = st.session_state.get('user_lat', 12.5)
+        stored_lon = st.session_state.get('user_lon', 77.2)
+        
         with col1:
-            latitude = st.number_input("Latitude", min_value=0.0, max_value=90.0, value=12.5, format="%.6f", 
+            latitude = st.number_input("Latitude", min_value=0.0, max_value=90.0, value=stored_lat, format="%.6f", 
                                      help="Your current latitude (use 'Get Live Location' button)")
         with col2:
-            longitude = st.number_input("Longitude", min_value=0.0, max_value=180.0, value=77.2, format="%.6f",
+            longitude = st.number_input("Longitude", min_value=0.0, max_value=180.0, value=stored_lon, format="%.6f",
                                      help="Your current longitude (use 'Get Live Location' button)")
+        
+        # JavaScript to get stored location from sessionStorage
+        st.markdown("""
+        <script>
+        // Get stored location from sessionStorage
+        const storedLat = sessionStorage.getItem('user_lat');
+        const storedLon = sessionStorage.getItem('user_lon');
+        
+        if (storedLat && storedLon) {
+            // Update the inputs if location was stored
+            const latInput = document.querySelector('input[aria-label="Latitude"]');
+            const lonInput = document.querySelector('input[aria-label="Longitude"]');
+            
+            if (latInput && lonInput) {
+                latInput.value = parseFloat(storedLat).toFixed(6);
+                lonInput.value = parseFloat(storedLon).toFixed(6);
+                
+                // Trigger events
+                latInput.dispatchEvent(new Event('input', { bubbles: true }));
+                lonInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+        </script>
+        """, unsafe_allow_html=True)
         
         # Show current coordinates
         st.info(f"📍 **Your Current Location:** {latitude:.6f}°N, {longitude:.6f}°E")
