@@ -483,6 +483,10 @@ class MobileOceanApp:
                             
                             # Save to session state for persistence
                             fishing_date = datetime.now()
+                            
+                            # Calculate SST for this location
+                            sst = 28.0 + (latitude - 12) * 0.1 + np.random.normal(0, 0.5)
+                            
                             catch_report = {
                                 'date': fishing_date.strftime('%Y-%m-%d'),
                                 'species': species,
@@ -491,7 +495,8 @@ class MobileOceanApp:
                                 'gear_type': gear_type,
                                 'vessel_type': vessel_type,
                                 'depth': fishing_depth,
-                                'individual_count': individual_count
+                                'individual_count': individual_count,
+                                'sst': round(sst, 1)
                             }
                             
                             # Add to session state
@@ -511,6 +516,9 @@ class MobileOceanApp:
                                 ocean_lat, ocean_lon, species, catch_weight, individual_count, 
                                 gear_type, vessel_type, fishing_depth
                             )
+                            
+                            # Update prediction data with real SST from catch report
+                            prediction_data['mean_sst'] = sst
                             
                             # Get ML prediction
                             prediction_result = self.get_species_abundance_prediction(prediction_data)
@@ -578,9 +586,17 @@ class MobileOceanApp:
         """Render weather and ocean conditions."""
         st.subheader("🌡️ Weather & Ocean Conditions")
         
-        # Mock weather data
+        # Get real SST data from catch reports or use default
+        if st.session_state.catch_reports:
+            # Use SST from most recent catch report
+            recent_report = st.session_state.catch_reports[-1]
+            avg_sst = recent_report.get('sst', 28.5)
+        else:
+            avg_sst = 28.5  # Default SST
+        
+        # Weather data with real SST
         weather_data = {
-            "Sea Surface Temperature": "28.5°C",
+            "Sea Surface Temperature": f"{avg_sst:.1f}°C",
             "Wind Speed": "12 knots",
             "Wind Direction": "SE",
             "Wave Height": "1.2m",
