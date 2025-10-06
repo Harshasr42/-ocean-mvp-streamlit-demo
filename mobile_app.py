@@ -41,6 +41,16 @@ class MobileOceanApp:
         self.user_data = None
         self.api_token = None
         self.api_config = APIConfig()
+        
+        # Initialize session state for data persistence
+        if 'catch_reports' not in st.session_state:
+            st.session_state.catch_reports = []
+        if 'total_catches' not in st.session_state:
+            st.session_state.total_catches = 0
+        if 'total_weight' not in st.session_state:
+            st.session_state.total_weight = 0.0
+        if 'fishing_days' not in st.session_state:
+            st.session_state.fishing_days = 0
     
     def make_api_request(self, method, url, **kwargs):
         """Make API request with retry logic for cold starts."""
@@ -471,6 +481,27 @@ class MobileOceanApp:
                             st.success("✅ Catch report submitted successfully!")
                             st.balloons()
                             
+                            # Save to session state for persistence
+                            catch_report = {
+                                'date': fishing_date.strftime('%Y-%m-%d'),
+                                'species': species,
+                                'weight': catch_weight,
+                                'location': f"{latitude:.6f}°N, {longitude:.6f}°E",
+                                'gear_type': gear_type,
+                                'vessel_type': vessel_type,
+                                'depth': fishing_depth,
+                                'individual_count': individual_count
+                            }
+                            
+                            # Add to session state
+                            st.session_state.catch_reports.append(catch_report)
+                            st.session_state.total_catches += 1
+                            st.session_state.total_weight += catch_weight
+                            
+                            # Update fishing days (count unique dates)
+                            unique_dates = set([report['date'] for report in st.session_state.catch_reports])
+                            st.session_state.fishing_days = len(unique_dates)
+                            
                             # Now trigger ML prediction
                             st.info("🤖 Analyzing environmental conditions and predicting species abundance...")
                             
@@ -579,13 +610,30 @@ class MobileOceanApp:
         """Render fisherman's personal data."""
         st.subheader("📊 My Fishing Data")
         
-        # Mock personal data
+        # Get data from session state
+        total_catches = st.session_state.total_catches
+        total_weight = st.session_state.total_weight
+        fishing_days = st.session_state.fishing_days
+        
+        # Calculate average catch per trip
+        avg_catch = total_weight / total_catches if total_catches > 0 else 0.0
+        
+        # Find most common species
+        if st.session_state.catch_reports:
+            species_counts = {}
+            for report in st.session_state.catch_reports:
+                species = report['species']
+                species_counts[species] = species_counts.get(species, 0) + 1
+            most_common_species = max(species_counts.items(), key=lambda x: x[1])[0] if species_counts else "None"
+        else:
+            most_common_species = "None"
+        
         personal_stats = {
-            "Total Catches This Month": 15,
-            "Total Weight (kg)": 450.5,
-            "Most Common Species": "Thunnus albacares",
-            "Average Catch per Trip": 30.0,
-            "Fishing Days": 12
+            "Total Catches This Month": total_catches,
+            "Total Weight (kg)": f"{total_weight:.1f}",
+            "Most Common Species": most_common_species,
+            "Average Catch per Trip": f"{avg_catch:.1f}",
+            "Fishing Days": fishing_days
         }
         
         col1, col2 = st.columns(2)
@@ -596,15 +644,31 @@ class MobileOceanApp:
             for key, value in list(personal_stats.items())[3:]:
                 st.metric(key, value)
         
-        # Recent catches
+        # Recent catches from session state
         st.subheader("📝 Recent Catches")
-        recent_catches = pd.DataFrame({
-            "Date": ["2023-12-20", "2023-12-19", "2023-12-18"],
-            "Species": ["Thunnus albacares", "Scomberomorus commerson", "Lutjanus argentimaculatus"],
-            "Weight (kg)": [45.2, 32.1, 28.7],
-            "Location": ["Zone A", "Zone B", "Zone A"]
-        })
-        st.dataframe(recent_catches, width='stretch')
+        
+        if st.session_state.catch_reports:
+            # Convert session state data to DataFrame
+            recent_catches = pd.DataFrame(st.session_state.catch_reports)
+            
+            # Rename columns for display
+            recent_catches = recent_catches.rename(columns={
+                'date': 'Date',
+                'species': 'Species', 
+                'weight': 'Weight (kg)',
+                'location': 'Location'
+            })
+            
+            # Show only the columns we want
+            display_columns = ['Date', 'Species', 'Weight (kg)', 'Location']
+            recent_catches = recent_catches[display_columns]
+            
+            # Sort by date (most recent first)
+            recent_catches = recent_catches.sort_values('Date', ascending=False)
+            
+            st.dataframe(recent_catches, width='stretch')
+        else:
+            st.info("📝 No catch reports yet. Submit your first catch report to see it here!")
     
     def render_researcher_dashboard(self):
         """Render dashboard for researchers."""
